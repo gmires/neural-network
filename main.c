@@ -146,6 +146,12 @@ NNet* NetEvaluate(NNet *nn, float *input){
   return nn;
 }
 
+/*
+float NetCost(NNet *nn, float *traindata){
+
+  return 0;
+}*/
+
 float TRAINING_DATA[][3] = {
   {0, 0, 0},
   {0, 1, 0},
@@ -161,6 +167,7 @@ int main(void)
   size_t init[] = {2, 3, 2, 1};
   NNet network = NetInit(init, size_of_array(init));
 
+  printf("-----------------------------------------------------\n");
   float cost = 0;
   float input[2] = {};
   for(int i = 0; i < (int)TRAINING_COUNT; i++){
@@ -171,13 +178,14 @@ int main(void)
 
     float d = y_obtained - y_expected;
 
-    printf("cost = %f | %f ^ %f = %f | expected = %f\n", (d*d/2), input[0], input[1], y_obtained, y_expected);
+    printf("%f ^ %f = %f | expected = %f\n", input[0], input[1], y_obtained, y_expected);
 
     cost += d*d;
   }
   cost /= (float)(TRAINING_COUNT);
-
-  printf("total cost = %f\n", cost);
+  printf("-----------------------------------------------------\n");
+  printf("Model cost = %f\n", cost);
+  printf("-----------------------------------------------------\n");
 
   return 0;
 }
