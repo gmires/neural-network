@@ -1,8 +1,12 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdio.h>
+#include <stdint.h>
 #include <sys/types.h>
+
+#define INPUT_LAYER 0
+#define HIDDEN_LAYER 1 
+#define OUTPUT_LAYER 2
 
 #define size_of_array(a) (sizeof(a) / sizeof(*a))
 
@@ -14,10 +18,15 @@ typedef struct NAFunction {
 typedef struct NNeuron {
   float *weight;
   float b;
+  float z;
   float activation;
+  float dz;
+  float *dw;
+  float db;
 } NNeuron;
 
 typedef struct NLayer {
+  u_int8_t type;
   NNeuron *neurons;
   NAFunction *funct;
 } NLayer;
@@ -41,7 +50,7 @@ float sigmoid(float value){
 }
 
 float sigmoid_derivate(float value){
-  return value * (1 - value);
+  return sigmoid(value) * (1 - sigmoid(value));
 }
 
 float relu(float value){
@@ -49,7 +58,7 @@ float relu(float value){
 }
 
 float relu_derivate(float value){
-  return (value < 0) ? 0.00f : 1.00f;
+  return (relu(value) < 0) ? 0.00f : 1.00f;
 }
 
 NAFunction SIGMOID = {
@@ -72,6 +81,15 @@ NNet NetInit(size_t *netsize, size_t size) {
   }
   n.layers = malloc(sizeof(*n.layers)*n.size);
   for(size_t i = 0; i < n.size;i++){
+    // --- layer type
+    if (i == 0){
+      n.layers[i].type = INPUT_LAYER;
+    } else if (i < n.size-1){
+      n.layers[i].type = OUTPUT_LAYER;
+    } else {
+      n.layers[i].type = OUTPUT_LAYER;
+    }
+    // --- activation function
     if (i == n.size-1) {
       n.layers[i].funct = &SIGMOID;
     } else if (i > 0) {
@@ -81,12 +99,17 @@ NNet NetInit(size_t *netsize, size_t size) {
     for(size_t j = 0; j < n.network[i]; j++){
       if (i > 0){
         n.layers[i].neurons[j].weight = malloc(sizeof(*n.layers[i].neurons[j].weight)*n.network[i-1]);
+        n.layers[i].neurons[j].dw = malloc(sizeof(*n.layers[i].neurons[j].dw)*n.network[i-1]);
         for(size_t y = 0; y < n.network[i-1]; y++){
           n.layers[i].neurons[j].weight[y] = rand_float();
+          n.layers[i].neurons[j].dw[y] = 0;
         }
       }
+      n.layers[i].neurons[j].z = 0;
+      n.layers[i].neurons[j].dz = 0;
       n.layers[i].neurons[j].activation = 0;
       n.layers[i].neurons[j].b = rand_float();
+      n.layers[i].neurons[j].db = 0;
     }
   }
 
@@ -106,9 +129,9 @@ void NetPrint(NNet *nn){
   for(int i = 0; i < (int)nn->size; i++){
     printf("-----------------------------\n");
     printf("\n  Layer %d, Neouron = %d\n", i+1, (int)nn->network[i]);
-    if (i == 0){
+    if (nn->layers[i].type == INPUT_LAYER){
       printf("  Type = INPUT\n");
-    } else if(i == (int)nn->size-1){
+    } else if(nn->layers[i].type == OUTPUT_LAYER ){
       printf("  Type = OUTPUT\n");
     } else {
       printf("  Type = HIDDEN\n");
@@ -136,11 +159,11 @@ NNet* NetEvaluate(NNet *nn, float *input){
   // -- Evaluatue in Network
   for (int i = 1; i < (int)nn->size; i++) {
     for(int j = 0; j < (int)nn->network[i]; j++){
-      nn->layers[i].neurons[j].activation = nn->layers[i].neurons[j].b; 
+      nn->layers[i].neurons[j].z = nn->layers[i].neurons[j].b; 
       for(int x = 0; x < (int)nn->network[i-1]; x++){
-        nn->layers[i].neurons[j].activation += nn->layers[i-1].neurons[x].activation * nn->layers[i].neurons[j].weight[x];
+        nn->layers[i].neurons[j].z += nn->layers[i-1].neurons[x].z * nn->layers[i].neurons[j].weight[x];
       }
-      nn->layers[i].neurons[j].activation = nn->layers[i].funct->activation(nn->layers[i].neurons[j].activation);
+      nn->layers[i].neurons[j].activation = nn->layers[i].funct->activation(nn->layers[i].neurons[j].z);
     }  
   }
   return nn;
