@@ -16,13 +16,13 @@ typedef struct NAFunction {
 } NAFunction;
 
 typedef struct NNeuron {
-  float *weight;
-  float b;
-  float z;
-  float activation;
-  float dz;
-  float *dw;
-  float db;
+  float *w;               // -- weight
+  float b;                // -- bias
+  float z;                // -- sum(a-1 * w)    
+  float a;                // -- act(z)
+  float dz;               // -- derive_prime(z)
+  float *dw;              // -- derive * a-1
+  float db;               // -- derive bias
 } NNeuron;
 
 typedef struct NLayer {
@@ -98,16 +98,16 @@ NNet NetInit(size_t *netsize, size_t size) {
     n.layers[i].neurons = malloc(sizeof(*n.layers[i].neurons)*n.network[i]);
     for(size_t j = 0; j < n.network[i]; j++){
       if (i > 0){
-        n.layers[i].neurons[j].weight = malloc(sizeof(*n.layers[i].neurons[j].weight)*n.network[i-1]);
+        n.layers[i].neurons[j].w = malloc(sizeof(*n.layers[i].neurons[j].w)*n.network[i-1]);
         n.layers[i].neurons[j].dw = malloc(sizeof(*n.layers[i].neurons[j].dw)*n.network[i-1]);
         for(size_t y = 0; y < n.network[i-1]; y++){
-          n.layers[i].neurons[j].weight[y] = rand_float();
+          n.layers[i].neurons[j].w[y] = rand_float();
           n.layers[i].neurons[j].dw[y] = 0;
         }
       }
       n.layers[i].neurons[j].z = 0;
       n.layers[i].neurons[j].dz = 0;
-      n.layers[i].neurons[j].activation = 0;
+      n.layers[i].neurons[j].a = 0;
       n.layers[i].neurons[j].b = rand_float();
       n.layers[i].neurons[j].db = 0;
     }
@@ -139,10 +139,10 @@ void NetPrint(NNet *nn){
     for(int j = 0; j < (int)nn->network[i]; j++) {
       printf("    n = %d\n", j+1);
       printf("    bias = %f\n", nn->layers[i].neurons[j].b);
-      printf("    activation = %f\n", nn->layers[i].neurons[j].activation);
+      printf("    activation = %f\n", nn->layers[i].neurons[j].a);
       if (i > 0){
         for(int x = 0; x < (int)nn->network[i-1]; x++){
-          printf("    weight[%d] %f\n", x, nn->layers[i].neurons[j].weight[x]);
+          printf("    weight[%d] %f\n", x, nn->layers[i].neurons[j].w[x]);
         }
       }
       printf("    ------------------------\n");      
@@ -154,16 +154,16 @@ void NetPrint(NNet *nn){
 NNet* NetEvaluate(NNet *nn, float *input){
   // -- set input layer
   for(int i = 0; i < (int)nn->network[0]; i++){
-    nn->layers[0].neurons[i].activation = input[i];
+    nn->layers[0].neurons[i].z = input[i];
   }
   // -- Evaluatue in Network
   for (int i = 1; i < (int)nn->size; i++) {
     for(int j = 0; j < (int)nn->network[i]; j++){
       nn->layers[i].neurons[j].z = nn->layers[i].neurons[j].b; 
       for(int x = 0; x < (int)nn->network[i-1]; x++){
-        nn->layers[i].neurons[j].z += nn->layers[i-1].neurons[x].z * nn->layers[i].neurons[j].weight[x];
+        nn->layers[i].neurons[j].z += nn->layers[i-1].neurons[x].z * nn->layers[i].neurons[j].w[x];
       }
-      nn->layers[i].neurons[j].activation = nn->layers[i].funct->activation(nn->layers[i].neurons[j].z);
+      nn->layers[i].neurons[j].a = nn->layers[i].funct->activation(nn->layers[i].neurons[j].z);
     }  
   }
   return nn;
@@ -197,7 +197,7 @@ int main(void)
     input[0] = TRAINING_DATA[i][0];
     input[1] = TRAINING_DATA[i][1];
     float y_expected = TRAINING_DATA[i][2];
-    float y_obtained = NetEvaluate(&network, input)->layers[network.size-1].neurons[0].activation;
+    float y_obtained = NetEvaluate(&network, input)->layers[network.size-1].neurons[0].a;
 
     float d = y_obtained - y_expected;
 
@@ -209,6 +209,8 @@ int main(void)
   printf("-----------------------------------------------------\n");
   printf("Model cost = %f\n", cost);
   printf("-----------------------------------------------------\n");
+
+  NetPrint(&network);
 
   return 0;
 }
