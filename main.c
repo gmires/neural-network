@@ -169,11 +169,98 @@ NNet* NetEvaluate(NNet *nn, float *input){
   return nn;
 }
 
-/*
-float NetCost(NNet *nn, float *traindata){
+NNet *NetBack(NNet *nn, float *output){
+  for(int i = 0; i < (int)nn->network[nn->size-1]; i++){
+    nn->layers[nn->size-1].neurons[i].dz = (nn->layers[nn->size-1].neurons[i].a - output[i]) * nn->layers[nn->size-1].funct->derivate(nn->layers[nn->size-1].neurons[i].z); 
+  }
+  for(int i = nn->size-2; i > 0; i++){
+    for(int n = 0; n < (int)nn->network[i]; n++){
+      for(int j = 0; j < (int)nn->network[i+1]; j++){
 
-  return 0;
-}*/
+      }      
+    }
+  }
+
+  return nn;
+}
+
+NNet *NetUpdate(NNet *nn, int rows, float lr){
+
+  return nn;
+}
+
+float NetCost(NNet *nn, float **data, int rows, int cols){
+  float cost = 0;
+  int s_in = (int)nn->network[0];
+  int s_ou = (int)nn->network[nn->size-1];
+  float input[s_in];
+  float output[s_ou];
+
+  for(int r = 0; r < rows; r++){
+    for(int i = 0; i < s_in; i++) input[i] = data[r][i];
+    for(int i = 0; i < s_ou; i++) output[i] = data[r][s_in + i];
+    NetEvaluate(nn, input);
+    for(int i = 0; i < s_ou; i++){
+      float y_obtained = nn->layers[nn->size-1].neurons[i].a;
+      float y_expected = output[i];
+
+      float d = y_obtained - y_expected;
+      cost += d * d / s_ou;
+    }
+  }
+  return (cost / rows);
+}
+
+NNet* NetTrain(NNet *nn, float **data, int rows, int cols, int epocs, float lr){
+  int s_in = (int)nn->network[0];
+  int s_ou = (int)nn->network[nn->size-1];
+  
+  float input[s_in];
+  float output[s_ou];
+
+  for(int e = 0; e < epocs; e++){
+    for(int r = 0; r < rows; r++){
+      for(int i = 0; i < s_in; i++) input[i] = data[r][i];
+      for(int i = 0; i < s_ou; i++) output[i] = data[r][s_in + i];
+      NetEvaluate(nn, input);
+      NetBack(nn, output);
+    }
+    // --- aggiornamento dei pesi e del bias
+    NetUpdate(nn, rows, lr);
+    float cost = NetCost(nn, data, rows, cols);
+    
+    if (e % 100 == 0)
+      printf("Epoch %4d | Loss = %.6f\n", e, cost);
+
+  }
+  return nn;
+}
+
+// ------------utility
+//
+float **NetMakeDataArray(int rows, int cols){
+  float **array = malloc(rows * sizeof(float*));    
+  if (array == NULL) {
+    perror("error memory allocation rows!");
+    exit(EXIT_FAILURE);
+  }
+  
+  for (int i = 0; i < rows; i++) {
+    array[i] = malloc(cols * sizeof(float));
+    if (array[i] == NULL) {
+      perror("error memory allocation cols!");
+      exit(EXIT_FAILURE);
+    }
+  }
+  return array;
+}
+
+void NetFreeDataArray(float **data, int rows){
+  for(int i = 0; i < rows; i++){
+    free(data[i]);
+  }
+  free(data);
+}
 
 float TRAINING_DATA[][3] = {
   {0, 0, 0},
@@ -189,9 +276,18 @@ int main(void)
 
   size_t init[] = {2, 3, 2, 1};
   NNet network = NetInit(init, size_of_array(init));
+  printf("TRAIN------------------------------------------------\n");
 
-  printf("-----------------------------------------------------\n");
-  float cost = 0;
+  float **data = NetMakeDataArray(TRAINING_COUNT, 3);
+  for (int r = 0; r < (int)TRAINING_COUNT; r++){
+    for (int c = 0; c < 3; c++) {
+      data[r][c] = TRAINING_DATA[r][c];
+    }
+  }
+
+  NetTrain(&network, data, TRAINING_COUNT, 3, 1000, 1e-3);
+
+  printf("EVALUATE---------------------------------------------\n");
   float input[2] = {};
   for(int i = 0; i < (int)TRAINING_COUNT; i++){
     input[0] = TRAINING_DATA[i][0];
@@ -199,18 +295,12 @@ int main(void)
     float y_expected = TRAINING_DATA[i][2];
     float y_obtained = NetEvaluate(&network, input)->layers[network.size-1].neurons[0].a;
 
-    float d = y_obtained - y_expected;
-
     printf("%f ^ %f = %f | expected = %f\n", input[0], input[1], y_obtained, y_expected);
-
-    cost += d*d;
   }
-  cost /= (float)(TRAINING_COUNT);
-  printf("-----------------------------------------------------\n");
-  printf("Model cost = %f\n", cost);
   printf("-----------------------------------------------------\n");
 
-  NetPrint(&network);
+//  NetPrint(&network);
+  NetFreeDataArray(data, TRAINING_COUNT);
 
   return 0;
 }
