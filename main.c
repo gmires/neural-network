@@ -218,7 +218,7 @@ NNet* NetTrain(NNet *nn, float **data, int rows, int cols, int epocs, float lr){
   float input[s_in];
   float output[s_ou];
 
-  for(int e = 0; e < epocs; e++){
+  for(int e = 1; e <= epocs; e++){
     for(int r = 0; r < rows; r++){
       for(int i = 0; i < s_in; i++) input[i] = data[r][i];
       for(int i = 0; i < s_ou; i++) output[i] = data[r][s_in + i];
@@ -229,15 +229,13 @@ NNet* NetTrain(NNet *nn, float **data, int rows, int cols, int epocs, float lr){
     NetUpdate(nn, rows, lr);
     float cost = NetCost(nn, data, rows, cols);
     
-    if (e % 100 == 0)
+    if (e == 1 || e % 100 == 0)
       printf("Epoch %4d | Loss = %.6f\n", e, cost);
 
   }
   return nn;
 }
 
-// ------------utility
-//
 float **NetMakeDataArray(int rows, int cols){
   float **array = malloc(rows * sizeof(float*));    
   if (array == NULL) {
@@ -261,6 +259,8 @@ void NetFreeDataArray(float **data, int rows){
   }
   free(data);
 }
+
+////---------------------------------------------------------------------------------
 
 float TRAINING_DATA[][3] = {
   {0, 0, 0},
@@ -287,7 +287,7 @@ int main(void)
 
   NetTrain(&network, data, TRAINING_COUNT, 3, 1000, 1e-3);
 
-  printf("EVALUATE---------------------------------------------\n");
+  printf("EVALUATE AFTER TRAIN----------------------------------\n");
   float input[2] = {};
   for(int i = 0; i < (int)TRAINING_COUNT; i++){
     input[0] = TRAINING_DATA[i][0];
@@ -304,3 +304,5 @@ int main(void)
 
   return 0;
 }
+
+/// --------------------------------------------------------------------------------
