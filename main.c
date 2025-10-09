@@ -55,10 +55,12 @@ float sigmoid_derivate(float value){
 
 float relu(float value){
   return (value > 0.00f) ? value : 0.00f;
+  //return (value > 0.f) ? value : (0.01 * value);
 }
 
 float relu_derivate(float value){
   return (relu(value) < 0) ? 0.00f : 1.00f;
+  //return relu(value) < 0 ? 0.01f : 1.00f;
 }
 
 NAFunction SIGMOID = {
@@ -85,12 +87,12 @@ NNet NetInit(size_t *netsize, size_t size) {
     if (i == 0){
       n.layers[i].type = INPUT_LAYER;
     } else if (i < n.size-1){
-      n.layers[i].type = OUTPUT_LAYER;
+      n.layers[i].type = HIDDEN_LAYER;
     } else {
       n.layers[i].type = OUTPUT_LAYER;
     }
     // --- activation function
-    if (i == n.size-1) {
+    if (n.layers[i].type == OUTPUT_LAYER) {
       n.layers[i].funct = &SIGMOID;
     } else if (i > 0) {
       n.layers[i].funct = &RELU;
@@ -108,7 +110,7 @@ NNet NetInit(size_t *netsize, size_t size) {
       n.layers[i].neurons[j].z = 0;
       n.layers[i].neurons[j].dz = 0;
       n.layers[i].neurons[j].a = 0;
-      n.layers[i].neurons[j].b = rand_float();
+      n.layers[i].neurons[j].b = n.layers[i].type == INPUT_LAYER ? 0 : rand_float();
       n.layers[i].neurons[j].db = 0;
     }
   }
@@ -173,19 +175,33 @@ NNet *NetBack(NNet *nn, float *output){
   for(int i = 0; i < (int)nn->network[nn->size-1]; i++){
     nn->layers[nn->size-1].neurons[i].dz = (nn->layers[nn->size-1].neurons[i].a - output[i]) * nn->layers[nn->size-1].funct->derivate(nn->layers[nn->size-1].neurons[i].z); 
   }
-  for(int i = nn->size-2; i > 0; i++){
+  for(int i = nn->size-2; i > 0; i--){
+    for(int n = 0; n < (int)nn->network[i+1]; n++){
+      nn->layers[i+1].neurons[n].db += nn->layers[i+1].neurons[n].dz;
+    }
     for(int n = 0; n < (int)nn->network[i]; n++){
+      float sum = 0;
       for(int j = 0; j < (int)nn->network[i+1]; j++){
-
-      }      
+        sum += nn->layers[i+1].neurons[j].w[n] * nn->layers[i+1].neurons[j].dz;
+        nn->layers[i+1].neurons[j].dw[n] += nn->layers[i].neurons[n].a * nn->layers[i+1].neurons[j].dz;
+      }
+      nn->layers[i].neurons[n].dz = sum * nn->layers[i].funct->derivate(nn->layers[i].neurons[n].z);
     }
   }
-
   return nn;
 }
 
 NNet *NetUpdate(NNet *nn, int rows, float lr){
-
+  for(int i = 1; i < (int)nn->size-1; i++){
+    for(int n = 0; n < (int)nn->network[i]; n++){
+      nn->layers[i].neurons[n].b -= (nn->layers[i].neurons[n].db / rows  * lr);
+      nn->layers[i].neurons[n].db = 0;
+      for(int l = 0; l < (int)nn->network[i-1]; l++){
+        nn->layers[i].neurons[n].w[l] -= (nn->layers[i].neurons[n].dw[l] / rows * lr);
+        nn->layers[i].neurons[n].dw[l] = 0;
+      }
+    }
+  }
   return nn;
 }
 
@@ -214,6 +230,7 @@ float NetCost(NNet *nn, float **data, int rows, int cols){
 NNet* NetTrain(NNet *nn, float **data, int rows, int cols, int epocs, float lr){
   int s_in = (int)nn->network[0];
   int s_ou = (int)nn->network[nn->size-1];
+  int x = epocs / 10;
   
   float input[s_in];
   float output[s_ou];
@@ -221,15 +238,15 @@ NNet* NetTrain(NNet *nn, float **data, int rows, int cols, int epocs, float lr){
   for(int e = 1; e <= epocs; e++){
     for(int r = 0; r < rows; r++){
       for(int i = 0; i < s_in; i++) input[i] = data[r][i];
-      for(int i = 0; i < s_ou; i++) output[i] = data[r][s_in + i];
+      for(int i = 0; i < s_ou; i++) output[i] = data[r][s_in + i];      
+
       NetEvaluate(nn, input);
       NetBack(nn, output);
     }
-    // --- aggiornamento dei pesi e del bias
     NetUpdate(nn, rows, lr);
     float cost = NetCost(nn, data, rows, cols);
     
-    if (e == 1 || e % 100 == 0)
+    if (e == 1 || e % x == 0)
       printf("Epoch %4d | Loss = %.6f\n", e, cost);
 
   }
@@ -261,6 +278,8 @@ void NetFreeDataArray(float **data, int rows){
 }
 
 ////---------------------------------------------------------------------------------
+#define EPOCS 10000000
+#define LRATE 0.01
 
 float TRAINING_DATA[][3] = {
   {0, 0, 0},
@@ -285,7 +304,7 @@ int main(void)
     }
   }
 
-  NetTrain(&network, data, TRAINING_COUNT, 3, 1000, 1e-3);
+  NetTrain(&network, data, TRAINING_COUNT, 3, EPOCS, LRATE);
 
   printf("EVALUATE AFTER TRAIN----------------------------------\n");
   float input[2] = {};
