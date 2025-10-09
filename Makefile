@@ -1,14 +1,26 @@
-CPP = gcc -O2 -Wall
+CC=gcc
+CFLAGS=-O2 -Wall -Wextra -lm -I.
+LDFLAGS=-lm
+
+DEPS = nnet.h
+OBJ = nnet.o funct.o main.o
 
 .PHONY: clean
 
-all: chip8 run
+all: nnet run
 
 run:
 	@./nnet
 
-chip8: main.c
-	@gcc main.c -o nnet -lm -O2 -W -Wall
+%.o: %.c $(DEPS)
+	$(CC) -c $<  $(CFLAGS) -o $@
+#	$(CPP) -c $@ $< 
+
+nnet: $(OBJ)
+	$(CC) -o $@ $^ $(LDFLAGS)
+	
+#nnet: main.c
+#	@gcc nnet.c main.c -o nnet -lm -O2 -W -Wall
 
 clean:
-	rm -f nnet
+	rm -f *.o nnet
