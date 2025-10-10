@@ -9,7 +9,7 @@
 #define size_of_array(a) (sizeof(a) / sizeof(*a))
 
 #define EPOCS 1000000
-#define LRATE 0.01
+#define LRATE 0.1
 
 float TRAINING_DATA[][3] = {
   {0, 0, 0},
@@ -26,6 +26,9 @@ int main(void)
   printf("\n1 - XOR TABLE\n\n");
   size_t init[] = {2, 3, 2, 1};
   NNet network = NetInit(init, size_of_array(init));
+  for(int i = 1; i < (int)network.size; i++) {
+    network.layers[i].funct = &SIGMOID;
+  }
   printf("TRAIN------------------------------------------------\n");
 
   float **data = NetMakeDataArray(TRAINING_COUNT, 3);
