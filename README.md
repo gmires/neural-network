@@ -79,4 +79,4 @@ Il framework è pensato per scopi didattici e non è ottimizzato per grandi data
 
 ## Autore
 
-Giacomo (adattato da Copilot)
+Giacomo Mola 
