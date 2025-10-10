@@ -12,8 +12,8 @@
 
 float TRAINING_DATA[][3] = {
   {0, 0, 0},
-  {0, 1, 0},
-  {1, 0, 0},
+  {0, 1, 1},
+  {1, 0, 1},
   {1, 1, 1}
 };
 #define TRAINING_COUNT (sizeof(TRAINING_DATA) / sizeof(TRAINING_DATA[0]))
@@ -22,7 +22,7 @@ int main(void)
 { 
   srand(1234);
 
-  printf("\n1 - AND TABLE\n\n");
+  printf("\n1 - OR TABLE\n\n");
   size_t init[] = {2, 3, 2, 1};
   NNet network = NetInit(init, size_of_array(init));
   printf("TRAIN------------------------------------------------\n");
