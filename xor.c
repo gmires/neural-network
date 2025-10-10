@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/types.h>
+#include <time.h>
 #include "nnet.h"
 
 #define size_of_array(a) (sizeof(a) / sizeof(*a))
@@ -20,9 +21,9 @@ float TRAINING_DATA[][3] = {
 
 int main(void)
 { 
-  srand(1234);
+  srand(time(NULL));
 
-  printf("\n1 - OR TABLE\n\n");
+  printf("\n1 - XOR TABLE\n\n");
   size_t init[] = {2, 3, 2, 1};
   NNet network = NetInit(init, size_of_array(init));
   printf("TRAIN------------------------------------------------\n");

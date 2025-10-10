@@ -58,5 +58,7 @@ float NetCost(NNet *nn, float **data, int rows);
 NNet* NetTrain(NNet *nn, float **data, int rows, int epocs, float lr);
 
 // ---------------------------------------------------------
+extern NAFunction SIGMOID;
+extern NAFunction RELU;
 
 #endif
