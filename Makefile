@@ -13,11 +13,11 @@ run:
 	@./nnet
 
 %.o: %.c $(DEPS)
-	$(CC) -c $<  $(CFLAGS) -o $@
+	@$(CC) -c $<  $(CFLAGS) -o $@
 #	$(CPP) -c $@ $< 
 
 nnet: $(OBJ)
-	$(CC) -o $@ $^ $(LDFLAGS)
+	@$(CC) -o $@ $^ $(LDFLAGS)
 	
 #nnet: main.c
 #	@gcc nnet.c main.c -o nnet -lm -O2 -W -Wall
