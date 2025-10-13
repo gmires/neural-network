@@ -1,4 +1,3 @@
-#include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -8,8 +7,8 @@
 
 #define size_of_array(a) (sizeof(a) / sizeof(*a))
 
-#define EPOCS 1000000
-#define LRATE 0.1
+#define EPOCS 100000000
+#define LRATE 0.01
 
 float TRAINING_DATA[][3] = {
   {0, 0, 0},
@@ -29,6 +28,7 @@ int main(void)
   for(int i = 1; i < (int)network.size; i++) {
     network.layers[i].funct = &SIGMOID;
   }
+
   printf("TRAIN------------------------------------------------\n");
 
   float **data = NetMakeDataArray(TRAINING_COUNT, 3);

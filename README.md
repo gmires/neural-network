@@ -9,8 +9,6 @@ Questo progetto implementa un semplice framework in C per la creazione, l'addest
 - **main.c**: Esempio di addestramento per la tabella AND.
 - **or.c**: Esempio di addestramento per la tabella OR.
 - **xor.c**: Esempio di addestramento per la tabella XOR.
-- **Makefile**: Permette la compilazione semplice dei vari esempi.
-- **README.md**: Questo file.
 
 ## Funzionalità Principali
 
