@@ -1,8 +1,16 @@
 #include "nnet.h"
 #include <math.h>
+#include <stdio.h>
+
+#define DEFALUT_RAND_MIN 0.0f
+#define DEFALUT_RAND_MAX 1.0f
+
+float rand_min = DEFALUT_RAND_MIN;
+float rand_max = DEFALUT_RAND_MAX;
 
 float rand_float() {
-  return (float)((float)rand() / (float)RAND_MAX);
+  float scale = (float)((float)rand() / (float)RAND_MAX);
+  return rand_min + scale * (rand_max - rand_min);
 };
 
 float **NetMakeDataArray(int rows, int cols) {

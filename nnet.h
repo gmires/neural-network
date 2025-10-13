@@ -38,6 +38,8 @@ typedef struct NNet {
 } NNet;
 
 // ---------------------------------------------------------
+extern float rand_min;
+extern float rand_max;
 
 float rand_float();
 float **NetMakeDataArray(int rows, int cols);
