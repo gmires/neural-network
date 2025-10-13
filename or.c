@@ -24,7 +24,7 @@ int main(void)
 
   printf("\n1 - OR TABLE\n\n");
   size_t init[] = {2, 3, 2, 1};
-  NNet network = NetInit(init, size_of_array(init));
+  NNet network = NetInit(init, size_of_array(init, &rand_float);
   printf("TRAIN------------------------------------------------\n");
 
   float **data = NetMakeDataArray(TRAINING_COUNT, 3);

@@ -3,12 +3,13 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <time.h>
+#include <math.h>
 #include "nnet.h"
 
 #define size_of_array(a) (sizeof(a) / sizeof(*a))
 
-#define EPOCS 100000
-#define LRATE 0.5
+#define EPOCS 1000000
+#define LRATE 0.1
 
 float TRAINING_DATA[][3] = {
   {0, 0, 0},
@@ -18,18 +19,25 @@ float TRAINING_DATA[][3] = {
 };
 #define TRAINING_COUNT (sizeof(TRAINING_DATA) / sizeof(TRAINING_DATA[0]))
 
+#define INPUTS 2
+#define HIDDEN 2
+
+float xavier_rand() {
+  return rand_float() * sqrtf(2.0f / (INPUTS + HIDDEN));
+}
+
 int main(void)
 { 
   srand(time(NULL));
 
   rand_min = -1.0f;
-  rand_max = 0.0f;
+  rand_max = +1.0f;
 
   printf("\n1 - XOR TABLE\n\n");
-  size_t init[] = {2, 3, 2, 1};
-  NNet network = NetInit(init, size_of_array(init));
+  size_t init[] = {INPUTS, HIDDEN, 1};
+  NNet network = NetInit(init, size_of_array(init), &xavier_rand);
   for(int i = 1; i < (int)network.size; i++) {
-    network.layers[i].funct = &SIGMOID;
+    network.layers[i].funct = &TANH;
   }
   printf("TRAIN------------------------------------------------\n");
 
@@ -53,7 +61,7 @@ int main(void)
     printf("%f ^ %f = %f | expected = %f\n", input[0], input[1], y_obtained, y_expected);
   }
   printf("PRINT NET--------------------------------------------\n");
-  NetPrint(&network);
+  // -- NetPrint(&network);
   printf("-----------------------------------------------------\n");
 
   NetFreeDataArray(data, TRAINING_COUNT);  

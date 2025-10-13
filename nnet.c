@@ -10,7 +10,12 @@ NAFunction RELU = {
   .derivate = &relu_derivate 
 };
 
-NNet NetInit(size_t *netsize, size_t size) {
+NAFunction TANH = { 
+  .activation = &tahn, 
+  .derivate = &tahn_derivate 
+};
+
+NNet NetInit(size_t *netsize, size_t size, float(*randfloat)()) {
   NNet n = {0};
   n.size = size;
   n.network = malloc(sizeof(*n.network)*n.size);
@@ -39,14 +44,14 @@ NNet NetInit(size_t *netsize, size_t size) {
         n.layers[i].neurons[j].w = malloc(sizeof(*n.layers[i].neurons[j].w)*n.network[i-1]);
         n.layers[i].neurons[j].dw = malloc(sizeof(*n.layers[i].neurons[j].dw)*n.network[i-1]);
         for(size_t y = 0; y < n.network[i-1]; y++){
-          n.layers[i].neurons[j].w[y] = rand_float();
+          n.layers[i].neurons[j].w[y] = randfloat();
           n.layers[i].neurons[j].dw[y] = 0;
         }
       }
       n.layers[i].neurons[j].z = 0;
       n.layers[i].neurons[j].dz = 0;
       n.layers[i].neurons[j].a = 0;
-      n.layers[i].neurons[j].b = n.layers[i].type == INPUT_LAYER ? 0 : rand_float();
+      n.layers[i].neurons[j].b = n.layers[i].type == INPUT_LAYER ? 0 : randfloat();
       n.layers[i].neurons[j].db = 0;
     }
   };
