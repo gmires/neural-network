@@ -71,7 +71,7 @@ void NetPrint(NNet *nn){
  
   for(int i = 0; i < (int)nn->size; i++){
     printf("-----------------------------\n");
-    printf("\n  Layer %d, Neouron = %d\n", i+1, (int)nn->network[i]);
+    printf("\n  Layer %d, Neuron = %d\n", i+1, (int)nn->network[i]);
     if (nn->layers[i].type == INPUT_LAYER){
       printf("  Type = INPUT\n");
     } else if(nn->layers[i].type == OUTPUT_LAYER ){
@@ -98,6 +98,7 @@ NNet* NetEvaluate(NNet *nn, float *input){
   // -- set input layer
   for(int i = 0; i < (int)nn->network[0]; i++){
     nn->layers[0].neurons[i].z = input[i];
+    nn->layers[0].neurons[i].a = input[i];
   }
   // -- Evaluatue in Network
   for (int i = 1; i < (int)nn->size; i++) {
@@ -133,7 +134,7 @@ NNet *NetBack(NNet *nn, float *output){
 };
 
 NNet *NetUpdate(NNet *nn, int rows, float lr){
-  for(int i = 1; i < (int)nn->size-1; i++){
+  for(int i = 1; i < (int)nn->size; i++){
     for(int n = 0; n < (int)nn->network[i]; n++){
       nn->layers[i].neurons[n].b -= (nn->layers[i].neurons[n].db / rows  * lr);
       nn->layers[i].neurons[n].db = 0;
