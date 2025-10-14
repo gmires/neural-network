@@ -8,8 +8,8 @@
 
 #define size_of_array(a) (sizeof(a) / sizeof(*a))
 
-#define EPOCS 100000
-#define LRATE 0.1
+#define EPOCS 10000000
+#define LRATE 0.5
 
 float TRAINING_DATA[][3] = {
   {0, 0, 0},

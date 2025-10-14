@@ -117,7 +117,7 @@ NNet *NetBack(NNet *nn, float *output){
   for(int i = 0; i < (int)nn->network[nn->size-1]; i++){
     nn->layers[nn->size-1].neurons[i].dz = (nn->layers[nn->size-1].neurons[i].a - output[i]) * nn->layers[nn->size-1].funct->derivate(nn->layers[nn->size-1].neurons[i].z); 
   }
-  for(int i = nn->size-2; i > 0; i--){
+  for(int i = nn->size-2; i >= 0; i--){
     for(int n = 0; n < (int)nn->network[i+1]; n++){
       nn->layers[i+1].neurons[n].db += nn->layers[i+1].neurons[n].dz;
     }
@@ -127,7 +127,8 @@ NNet *NetBack(NNet *nn, float *output){
         sum += nn->layers[i+1].neurons[j].w[n] * nn->layers[i+1].neurons[j].dz;
         nn->layers[i+1].neurons[j].dw[n] += nn->layers[i].neurons[n].a * nn->layers[i+1].neurons[j].dz;
       }
-      nn->layers[i].neurons[n].dz = sum * nn->layers[i].funct->derivate(nn->layers[i].neurons[n].z);
+      if (nn->layers[i].type !=  INPUT_LAYER)
+        nn->layers[i].neurons[n].dz = sum * nn->layers[i].funct->derivate(nn->layers[i].neurons[n].z);
     }
   }
   return nn;
