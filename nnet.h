@@ -48,6 +48,8 @@ float sigmoid(float value);
 float sigmoid_derivate(float value);
 float relu(float value);
 float relu_derivate(float value);
+float l_relu(float value);
+float l_relu_derivate(float value);
 float tahn(float value);
 float tahn_derivate(float value);
 // ---------------------------------------------------------
@@ -64,5 +66,6 @@ NNet* NetTrain(NNet *nn, float **data, int rows, int epocs, float lr);
 extern NAFunction SIGMOID;
 extern NAFunction RELU;
 extern NAFunction TANH;
+extern NAFunction LRELU;
 
 #endif

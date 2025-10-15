@@ -10,6 +10,11 @@ NAFunction RELU = {
   .derivate = &relu_derivate 
 };
 
+NAFunction LRELU = { 
+  .activation = &l_relu, 
+  .derivate = &l_relu_derivate 
+};
+
 NAFunction TANH = { 
   .activation = &tahn, 
   .derivate = &tahn_derivate 

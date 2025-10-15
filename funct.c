@@ -55,6 +55,14 @@ float relu_derivate(float value) {
   //return relu(value) < 0 ? 0.01f : 1.00f;
 };
 
+float l_relu(float value) {
+  return (value > 0.f) ? value : (0.01 * value);
+};
+
+float l_relu_derivate(float value) {
+  return relu(value) < 0 ? 0.01f : 1.00f;
+};
+
 float tahn(float value) {
   return tanhf(value);
 };

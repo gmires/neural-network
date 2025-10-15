@@ -9,7 +9,7 @@
 #define size_of_array(a) (sizeof(a) / sizeof(*a))
 
 #define EPOCS 10000000
-#define LRATE 0.5
+#define LRATE 0.2
 
 float TRAINING_DATA[][3] = {
   {0, 0, 0},
@@ -30,6 +30,9 @@ float xavier_rand() {
 int main(void)
 { 
   srand(time(NULL));
+
+  rand_min = -1.0f;
+  rand_max = 1.0f;
 
   printf("\n1 - XOR TABLE\n\n");
   size_t init[] = {INPUTS, HIDDEN, OUTPUT};
