@@ -274,20 +274,28 @@ NNet* NetTrain(NNet *nn, float **data, int rows, int epocs, float lr){
 };
 
 void NetFree(NNet *nn){
-  if (!nn) return;
-  if (nn->network) free(nn->network);
-  if (!nn->layers) return;
+  if (!nn) 
+    return;
+  if (!nn->layers) 
+    return;
   for(int i = 0; i < (int)nn->size; i++){
-    if (!nn->layers[i].neurons) continue;
+    if (!nn->layers[i].neurons) 
+      continue;
     for(int j = 0; j < (int)nn->network[i]; j++){
       if (i > 0) {
-        if (nn->layers[i].neurons[j].w) free(nn->layers[i].neurons[j].w);
-        if (nn->layers[i].neurons[j].dw) free(nn->layers[i].neurons[j].dw);
-        if (nn->layers[i].neurons[j].m_w) free(nn->layers[i].neurons[j].m_w);
-        if (nn->layers[i].neurons[j].v_w) free(nn->layers[i].neurons[j].v_w);
+        if (nn->layers[i].neurons[j].w) 
+          free(nn->layers[i].neurons[j].w);
+        if (nn->layers[i].neurons[j].dw) 
+          free(nn->layers[i].neurons[j].dw);
+        if (nn->layers[i].neurons[j].m_w) 
+          free(nn->layers[i].neurons[j].m_w);
+        if (nn->layers[i].neurons[j].v_w) 
+          free(nn->layers[i].neurons[j].v_w);
       }
     }
     free(nn->layers[i].neurons);
   }
+  if (nn->network) 
+    free(nn->network);
   free(nn->layers);
 }

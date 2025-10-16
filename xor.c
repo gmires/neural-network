@@ -9,7 +9,7 @@
 #define size_of_array(a) (sizeof(a) / sizeof(*a))
 
 #define EPOCS 100000
-#define LRATE 0.05
+#define LRATE 0.01
 
 float TRAINING_DATA[][3] = {
   {0, 0, 0},
@@ -24,7 +24,7 @@ float TRAINING_DATA[][3] = {
 #define OUTPUT 1
 
 float xavier_rand() {
-  return rand_float() * sqrtf(2.0f / (INPUTS + HIDDEN));
+  return rand_float() * sqrtf(6.0f / (INPUTS + OUTPUT));
 }
 
 int main(void)
