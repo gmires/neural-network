@@ -10,6 +10,13 @@
 #define HIDDEN_LAYER 1 
 #define OUTPUT_LAYER 2
 
+#define OPTIMIZER_SGD 0
+#define OPTIMIZER_ADAM 1
+
+#define ADAM_BETA1 0.9f
+#define ADAM_BETA2 0.999f
+#define ADAM_EPS 1e-8f  
+
 typedef struct NAFunction {
   float (*activation)(float);
   float (*derivate)(float);
@@ -17,12 +24,16 @@ typedef struct NAFunction {
 
 typedef struct NNeuron {
   float *w;               // -- weight
+  float *dw;              // -- derive * a-1
+  float *m_w;             // -- ADAM - moment for weight 
+  float *v_w;             // -- ADAM - moment for weight 
   float b;                // -- bias
+  float db;               // -- derive bias
+  float m_b;              // -- ADAM - moment for bias
+  float v_b;              // -- ADAM - moment for bias
   float z;                // -- sum(a-1 * w)    
   float a;                // -- act(z)
   float dz;               // -- derive_prime(z)
-  float *dw;              // -- derive * a-1
-  float db;               // -- derive bias
 } NNeuron;
 
 typedef struct NLayer {
@@ -35,6 +46,8 @@ typedef struct NNet {
   size_t size;
   size_t *network; 
   NLayer *layers;
+  int t;                 // -- ADAM - time step
+  int optimizer;       // -- OPTIMIZER_SGD | OPTIMIZER_ADAM
 } NNet;
 
 // ---------------------------------------------------------
@@ -50,15 +63,17 @@ float relu(float value);
 float relu_derivate(float value);
 float l_relu(float value);
 float l_relu_derivate(float value);
-float tahn(float value);
-float tahn_derivate(float value);
+float _tanh(float value);
+float _tanh_derivate(float value);
 // ---------------------------------------------------------
 
 NNet NetInit(size_t *netsize, size_t size, float(*randfloat)());
 void NetPrint(NNet *nn);
+void NetFree(NNet *nn);
 NNet* NetEvaluate(NNet *nn, float *input);
 NNet *NetBack(NNet *nn, float *output);
 NNet *NetUpdate(NNet *nn, int rows, float lr);
+NNet *NetUpdateAdam(NNet *nn, int rows, float lr, float beta1, float beta2, float eps);
 float NetCost(NNet *nn, float **data, int rows);
 NNet* NetTrain(NNet *nn, float **data, int rows, int epocs, float lr);
 
@@ -67,5 +82,9 @@ extern NAFunction SIGMOID;
 extern NAFunction RELU;
 extern NAFunction TANH;
 extern NAFunction LRELU;
+
+extern float Adam_Beta1;
+extern float Adam_Beta2;
+extern float Adam_Eps;
 
 #endif

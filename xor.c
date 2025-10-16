@@ -8,8 +8,8 @@
 
 #define size_of_array(a) (sizeof(a) / sizeof(*a))
 
-#define EPOCS 10000000
-#define LRATE 0.2
+#define EPOCS 100000
+#define LRATE 0.05
 
 float TRAINING_DATA[][3] = {
   {0, 0, 0},
@@ -40,6 +40,7 @@ int main(void)
   for(int i = 1; i < (int)network.size; i++) {
     network.layers[i].funct = &TANH;
   }
+  network.optimizer = OPTIMIZER_ADAM;
   printf("TRAIN------------------------------------------------\n");
 
   float **data = NetMakeDataArray(TRAINING_COUNT, 3);
@@ -65,6 +66,7 @@ int main(void)
   NetPrint(&network);
   printf("-----------------------------------------------------\n");
 
+  NetFree(&network);
   NetFreeDataArray(data, TRAINING_COUNT);  
 
   return 0;

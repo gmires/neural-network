@@ -51,6 +51,7 @@ int main(void)
   printf("-----------------------------------------------------\n");
 
   NetFreeDataArray(data, TRAINING_COUNT);  
+  NetFree(&network);
 
   return 0;
 }

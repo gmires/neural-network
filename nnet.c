@@ -1,4 +1,5 @@
 #include "nnet.h"
+#include <math.h>
 
 NAFunction SIGMOID = { 
   .activation = &sigmoid, 
@@ -16,13 +17,19 @@ NAFunction LRELU = {
 };
 
 NAFunction TANH = { 
-  .activation = &tahn, 
-  .derivate = &tahn_derivate 
+  .activation = &_tanh, 
+  .derivate = &_tanh_derivate 
 };
+
+float Adam_Beta1 = ADAM_BETA1;
+float Adam_Beta2 = ADAM_BETA2;
+float Adam_Eps = ADAM_EPS;
 
 NNet NetInit(size_t *netsize, size_t size, float(*randfloat)()) {
   NNet n = {0};
   n.size = size;
+  n.t = 0;
+  n.optimizer = OPTIMIZER_SGD;
   n.network = malloc(sizeof(*n.network)*n.size);
   for(int i = 0; i < (int)n.size; i++){
     n.network[i] = netsize[i];
@@ -48,9 +55,14 @@ NNet NetInit(size_t *netsize, size_t size, float(*randfloat)()) {
       if (i > 0){
         n.layers[i].neurons[j].w = malloc(sizeof(*n.layers[i].neurons[j].w)*n.network[i-1]);
         n.layers[i].neurons[j].dw = malloc(sizeof(*n.layers[i].neurons[j].dw)*n.network[i-1]);
+        /* allocare e inizializzare momenti Adam */
+        n.layers[i].neurons[j].m_w = malloc(sizeof(*n.layers[i].neurons[j].m_w)*n.network[i-1]);
+        n.layers[i].neurons[j].v_w = malloc(sizeof(*n.layers[i].neurons[j].v_w)*n.network[i-1]);
         for(size_t y = 0; y < n.network[i-1]; y++){
           n.layers[i].neurons[j].w[y] = randfloat();
           n.layers[i].neurons[j].dw[y] = 0;
+          n.layers[i].neurons[j].m_w[y] = 0.0f;
+          n.layers[i].neurons[j].v_w[y] = 0.0f;
         }
       }
       n.layers[i].neurons[j].z = 0;
@@ -58,6 +70,8 @@ NNet NetInit(size_t *netsize, size_t size, float(*randfloat)()) {
       n.layers[i].neurons[j].a = 0;
       n.layers[i].neurons[j].b = n.layers[i].type == INPUT_LAYER ? 0 : randfloat();
       n.layers[i].neurons[j].db = 0;
+      n.layers[i].neurons[j].m_b = 0.0f;
+      n.layers[i].neurons[j].v_b = 0.0f;
     }
   };
 
@@ -67,7 +81,7 @@ NNet NetInit(size_t *netsize, size_t size, float(*randfloat)()) {
 void NetPrint(NNet *nn){
   printf("\n");
   printf("-----------------------------\n");
-  printf("Net Layes = %d, ", (int)nn->size);
+  printf("Net Layers = %d, ", (int)nn->size);
   printf(" size : ");
   for (int i = 0; i < (int)nn->size; i++) {
     printf("%d ", (int)nn->network[i]);  
@@ -110,7 +124,7 @@ NNet* NetEvaluate(NNet *nn, float *input){
     for(int j = 0; j < (int)nn->network[i]; j++){
       nn->layers[i].neurons[j].z = nn->layers[i].neurons[j].b; 
       for(int x = 0; x < (int)nn->network[i-1]; x++){
-        nn->layers[i].neurons[j].z += nn->layers[i-1].neurons[x].z * nn->layers[i].neurons[j].w[x];
+        nn->layers[i].neurons[j].z += nn->layers[i-1].neurons[x].a * nn->layers[i].neurons[j].w[x];
       }
       nn->layers[i].neurons[j].a = nn->layers[i].funct->activation(nn->layers[i].neurons[j].z);
     }  
@@ -146,6 +160,55 @@ NNet *NetUpdate(NNet *nn, int rows, float lr){
       nn->layers[i].neurons[n].db = 0;
       for(int l = 0; l < (int)nn->network[i-1]; l++){
         nn->layers[i].neurons[n].w[l] -= (nn->layers[i].neurons[n].dw[l] / rows * lr);
+        nn->layers[i].neurons[n].dw[l] = 0;
+      }
+    }
+  }
+  return nn;
+};
+
+NNet *NetUpdateAdam(NNet *nn, int rows, float lr, float beta1, float beta2, float eps){
+  /* incremento del passo temporale */
+  nn->t += 1;
+  /* calcolo dei fattori per bias-correction */
+  float bias_correction1 = 1.0f - powf(beta1, nn->t);
+  float bias_correction2 = 1.0f - powf(beta2, nn->t);
+
+  for(int i = 1; i < (int)nn->size; i++){
+    for(int n = 0; n < (int)nn->network[i]; n++){
+      /* gradiente medio per bias */
+      float g_b = nn->layers[i].neurons[n].db / (float)rows;
+
+      /* aggiorno momenti per bias */
+      nn->layers[i].neurons[n].m_b = beta1 * nn->layers[i].neurons[n].m_b + (1.0f - beta1) * g_b;
+      nn->layers[i].neurons[n].v_b = beta2 * nn->layers[i].neurons[n].v_b + (1.0f - beta2) * (g_b * g_b);
+
+      /* bias-corrected */
+      float mhat_b = nn->layers[i].neurons[n].m_b / bias_correction1;
+      float vhat_b = nn->layers[i].neurons[n].v_b / bias_correction2;
+
+      /* aggiornamento bias */
+      nn->layers[i].neurons[n].b -= lr * mhat_b / (sqrtf(vhat_b) + eps);
+
+      /* azzero accumuli */
+      nn->layers[i].neurons[n].db = 0;
+
+      /* pesi */
+      for(int l = 0; l < (int)nn->network[i-1]; l++){
+        float g_w = nn->layers[i].neurons[n].dw[l] / (float)rows;
+
+        /* aggiorno momenti per peso */
+        nn->layers[i].neurons[n].m_w[l] = beta1 * nn->layers[i].neurons[n].m_w[l] + (1.0f - beta1) * g_w;
+        nn->layers[i].neurons[n].v_w[l] = beta2 * nn->layers[i].neurons[n].v_w[l] + (1.0f - beta2) * (g_w * g_w);
+
+        /* bias-corrected */
+        float mhat = nn->layers[i].neurons[n].m_w[l] / bias_correction1;
+        float vhat = nn->layers[i].neurons[n].v_w[l] / bias_correction2;
+
+        /* aggiornamento peso */
+        nn->layers[i].neurons[n].w[l] -= lr * mhat / (sqrtf(vhat) + eps);
+
+        /* azzero accumulo gradiente */
         nn->layers[i].neurons[n].dw[l] = 0;
       }
     }
@@ -191,7 +254,16 @@ NNet* NetTrain(NNet *nn, float **data, int rows, int epocs, float lr){
       NetEvaluate(nn, input);
       NetBack(nn, output);
     }
-    NetUpdate(nn, rows, lr);
+    switch (nn->optimizer) {
+      case OPTIMIZER_SGD:
+        NetUpdate(nn, rows, lr);
+        break;
+      case OPTIMIZER_ADAM:
+        NetUpdateAdam(nn, rows, lr, Adam_Beta1, Adam_Beta2, Adam_Eps);
+        break;
+      default:
+        break;
+    }
     float cost = NetCost(nn, data, rows);
     
     if (e == 1 || e % x == 0)
@@ -200,3 +272,22 @@ NNet* NetTrain(NNet *nn, float **data, int rows, int epocs, float lr){
   }
   return nn;
 };
+
+void NetFree(NNet *nn){
+  if (!nn) return;
+  if (nn->network) free(nn->network);
+  if (!nn->layers) return;
+  for(int i = 0; i < (int)nn->size; i++){
+    if (!nn->layers[i].neurons) continue;
+    for(int j = 0; j < (int)nn->network[i]; j++){
+      if (i > 0) {
+        if (nn->layers[i].neurons[j].w) free(nn->layers[i].neurons[j].w);
+        if (nn->layers[i].neurons[j].dw) free(nn->layers[i].neurons[j].dw);
+        if (nn->layers[i].neurons[j].m_w) free(nn->layers[i].neurons[j].m_w);
+        if (nn->layers[i].neurons[j].v_w) free(nn->layers[i].neurons[j].v_w);
+      }
+    }
+    free(nn->layers[i].neurons);
+  }
+  free(nn->layers);
+}

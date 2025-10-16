@@ -63,10 +63,10 @@ float l_relu_derivate(float value) {
   return relu(value) < 0 ? 0.01f : 1.00f;
 };
 
-float tahn(float value) {
+float _tanh(float value) {
   return tanhf(value);
 };
 
-float tahn_derivate(float value) {
+float _tanh_derivate(float value) {
   return  1.0f - tanhf(value) * tanhf(value);
 };
