@@ -1,6 +1,4 @@
-#include <math.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <stdint.h>
 #include <sys/types.h>
 #include "nnet.h"
