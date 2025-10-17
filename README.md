@@ -16,7 +16,6 @@ Struttura del repository
 - `funct.c` — funzioni di attivazione e derivate (SIGMOID, RELU, LRELU, TANH)
 - `xor.c`, `and.c`, `or.c` — esempi di utilizzo / test
 - `Makefile` — target di compilazione
-- `README.md` — questo file
 
 Caratteristiche principali
 --------------------------
